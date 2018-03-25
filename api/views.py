@@ -5,6 +5,8 @@ from django.http import HttpResponse, Http404
 import os
 from os import listdir
 from os.path import isfile, join
+
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from api.models import Record
 import pefile
@@ -12,8 +14,12 @@ import pefile
 from server import settings
 
 
-@csrf_exempt
 def index(request):
+    return render(request, 'api/index.html')
+
+
+@csrf_exempt
+def request(request):
     json_response = "0"
     if request.method == "POST":
         arch = request.POST.get('arch')
