@@ -53,6 +53,7 @@ def download(request):
 def result(request):
     if request.method == "POST":
         id = request.POST.get('id')
+        vbox_name = request.POST.get('vbox')
         file = Record.objects.filter(id=id).first()
         file.response = request.POST.get('response')
         file.sequence = request.POST.get('sequence')
@@ -66,6 +67,7 @@ def result(request):
         file.status = 2
         file.updated_time = datetime.datetime.now()
         file.save()
+        # TODO: revert snapshot = vbox here
     return HttpResponse('')
 
 
@@ -89,6 +91,11 @@ def collect(request, type):
         except Exception as e:
             pass
     return HttpResponse("Files added to database.")
+
+
+def check(request):
+    # TODO: check for timed out vboxes and revert them
+    return HttpResponse("Task completed.")
 
 
 def _pe_info(file):
