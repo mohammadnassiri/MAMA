@@ -22,12 +22,13 @@ def index(request):
         if arch == "x64":
             arch = "IMAGE_FILE_MACHINE_AMD64"
         response = Record.objects.filter(status=0).filter(arch=arch).order_by('id').first()
-        output = {
-                     'id': response.id,
-                     'name': response.name,
-                     'arch': response.arch,
-                }
-        json_response = json.dumps(output)
+        if response:
+            output = {
+                         'id': response.id,
+                         'name': response.name,
+                         'arch': response.arch,
+                    }
+            json_response = json.dumps(output)
     return HttpResponse(json_response)
 
 
@@ -59,7 +60,8 @@ def result(request):
             file.run_pe_file = request.FILES.get('run_pe_file')
         if request.POST.get('run_pe_sequence'):
             file.run_pe_sequence = request.POST.get('run_pe_sequence')
-        file.screen_shot = request.FILES.get('screen_shot')
+        if request.FILES.get('screen_shot'):
+            file.screen_shot = request.FILES.get('screen_shot')
         file.run_pe = request.POST.get('run_pe')
         file.status = 2
         file.updated_time = datetime.datetime.now()
