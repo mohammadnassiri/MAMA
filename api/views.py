@@ -103,9 +103,15 @@ def collect(request, type):
 
 
 def check(request):
-    on_process_files = Record.objects.filter(status=1).get()
-    #for opf in on_process_files:
-
+    on_process_files = Record.objects.filter(status=1)
+    cur_time = datetime.datetime.now(datetime.timezone.utc)
+    for opf in on_process_files:
+        diff = cur_time - opf.updated_time
+        diff_minutes = (diff.days * 24 * 60) + (diff.seconds / 60)
+        if diff_minutes > 5:
+            # revert vbox
+            opf.status = 3
+            opf.save()
     return HttpResponse("Task completed.")
 
 
