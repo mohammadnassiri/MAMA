@@ -14,5 +14,6 @@ class Record(models.Model):
     malware = models.BooleanField(default=False)
     run_pe = models.BooleanField(default=False)
     status = models.IntegerField(default=0)
+    vbox = models.CharField(max_length=255)
     created_time = models.DateTimeField(default=datetime.now)
     updated_time = models.DateTimeField(default=datetime.now)

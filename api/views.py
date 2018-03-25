@@ -15,6 +15,7 @@ from server import settings
 
 
 def index(request):
+    # TODO: more information provide
     return render(request, 'api/index.html')
 
 
@@ -42,8 +43,10 @@ def request(request):
 def download(request):
     if request.method == "POST":
         id = request.POST.get('id')
+        vbox = request.POST.get('vbox')
         file = Record.objects.filter(id=id).first()
         file.status = 1
+        file.vbox = vbox
         file.save()
         if file:
             file_path = os.path.join(settings.BASE_DIR, file.file.name)
@@ -59,7 +62,6 @@ def download(request):
 def result(request):
     if request.method == "POST":
         id = request.POST.get('id')
-        vbox_name = request.POST.get('vbox')
         file = Record.objects.filter(id=id).first()
         file.response = request.POST.get('response')
         file.sequence = request.POST.get('sequence')
@@ -73,6 +75,7 @@ def result(request):
         file.status = 2
         file.updated_time = datetime.datetime.now()
         file.save()
+        # vbox = file.vbox
         # TODO: revert snapshot = vbox here
     return HttpResponse('')
 
@@ -100,7 +103,9 @@ def collect(request, type):
 
 
 def check(request):
-    # TODO: check for timed out vboxes and revert them
+    on_process_files = Record.objects.filter(status=1).get()
+    #for opf in on_process_files:
+
     return HttpResponse("Task completed.")
 
 
