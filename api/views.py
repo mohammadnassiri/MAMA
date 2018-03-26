@@ -75,6 +75,10 @@ def result(request):
         file.run_pe = request.POST.get('run_pe')
         file.status = 2
         file.updated_time = datetime.datetime.now()
+        # move file to traced folder
+        new_path = os.path.join(file.path.name, "traced")
+        os.rename(os.path.join(file.path.name, file.name), os.path.join(new_path, file.name))
+        file.path = new_path
         file.save()
         vbox_name = file.vbox
         vbox_snapshot_name = vbox_name + "-snapshot"
@@ -109,11 +113,13 @@ def collect(request, type):
                     Record.objects.create(
                         name=f,
                         arch=arch,
-                        file=os.path.join(path, f),
+                        file=path,
                         malware=malware,
                     )
                 else:
-                    os.rename(os.path.join(path, f), os.path.join(path, "NotValid_" + f))
+                    # move file to not valid folder
+                    new_path = os.path.join(path, "notvalid")
+                    os.rename(os.path.join(path, f), os.path.join(new_path, f))
             except Exception as e:
                 pass
     return HttpResponse("Files added to database.")
@@ -143,6 +149,10 @@ def check(request):
             command = vboxmanage_path + " startvm " + vbox_name
             subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE).communicate()
+            # move file to error folder
+            new_path = os.path.join(opf.path.name, "notvalid")
+            os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
+            opf.path = new_path
             opf.status = 3
             opf.save()
     return HttpResponse("Task completed.")
