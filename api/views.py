@@ -1,15 +1,16 @@
 import json
-
+from decouple import config
 import datetime
 from django.http import HttpResponse, Http404
 import os
+import subprocess
 from os import listdir
 from os.path import isfile, join
-
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from api.models import Record
 import pefile
+import time
 
 from server import settings
 
@@ -31,10 +32,10 @@ def request(request):
         response = Record.objects.filter(status=0).filter(arch=arch).order_by('id').first()
         if response:
             output = {
-                         'id': response.id,
-                         'name': response.name,
-                         'arch': response.arch,
-                    }
+                'id': response.id,
+                'name': response.name,
+                'arch': response.arch,
+            }
             json_response = json.dumps(output)
     return HttpResponse(json_response)
 
@@ -75,8 +76,20 @@ def result(request):
         file.status = 2
         file.updated_time = datetime.datetime.now()
         file.save()
-        # vbox = file.vbox
-        # TODO: revert snapshot = vbox here
+        vbox_name = file.vbox
+        vbox_snapshot_name = vbox_name + "-snapshot"
+        # power off vbox
+        vboxmanage_path = config("VBOXMANGE")
+        command = vboxmanage_path + " controlvm " + vbox_name + " poweroff"
+        subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        time.sleep(3)
+        # revert snapshot
+        command = vboxmanage_path + " snapshot " + vbox_name + " restore " + vbox_snapshot_name
+        subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        time.sleep(3)
+        # resume vbox
+        command = vboxmanage_path + " startvm " + vbox_name
+        subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return HttpResponse('')
 
 
@@ -108,8 +121,24 @@ def check(request):
     for opf in on_process_files:
         diff = cur_time - opf.updated_time
         diff_minutes = (diff.days * 24 * 60) + (diff.seconds / 60)
-        if diff_minutes > 5:
-            # revert vbox
+        if diff_minutes > 7:
+            vbox_name = opf.vbox
+            vbox_snapshot_name = vbox_name + "-snapshot"
+            vboxmanage_path = config("VBOXMANGE")
+            # power off vbox
+            command = vboxmanage_path + " controlvm " + vbox_name + " poweroff"
+            subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).communicate()
+            time.sleep(3)
+            # revert snapshot
+            command = vboxmanage_path + " snapshot " + vbox_name + " restore " + vbox_snapshot_name
+            subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).communicate()
+            time.sleep(3)
+            # resume vbox
+            command = vboxmanage_path + " startvm " + vbox_name
+            subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).communicate()
             opf.status = 3
             opf.save()
     return HttpResponse("Task completed.")
