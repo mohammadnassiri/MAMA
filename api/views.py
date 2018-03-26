@@ -50,7 +50,7 @@ def download(request):
         file.vbox = vbox
         file.save()
         if file:
-            file_path = os.path.join(settings.BASE_DIR, file.file.name)
+            file_path = os.path.join(file.path.name, file.name)
             if os.path.exists(file_path):
                 with open(file_path, 'rb') as fh:
                     response = HttpResponse(fh.read(), content_type='application/x-download')
@@ -105,23 +105,27 @@ def collect(request, type):
         malware = 0
     files = [f for f in listdir(path) if isfile(join(path, f))]
     for f in files:
-        time.sleep(1)
-        if not f.find("NotValid_") == 0:
-            try:
-                arch = _pe_info(os.path.join(path, f))
-                if arch is not None:
-                    Record.objects.create(
-                        name=f,
-                        arch=arch,
-                        file=path,
-                        malware=malware,
-                    )
+        try:
+            arch = _pe_info(os.path.join(path, f))
+            if arch is not None:
+                if arch == "IMAGE_FILE_MACHINE_I386":
+                    new_path = os.path.join(path, "x86")
                 else:
-                    # move file to not valid folder
-                    new_path = os.path.join(path, "notvalid")
-                    os.rename(os.path.join(path, f), os.path.join(new_path, f))
-            except Exception as e:
-                pass
+                    new_path = os.path.join(path, "x64")
+                os.rename(os.path.join(path, f), os.path.join(new_path, f))
+                Record.objects.create(
+                    name=f,
+                    arch=arch,
+                    path=new_path,
+                    malware=malware,
+                )
+            else:
+                # move file to not valid folder
+                new_path = os.path.join(path, "notvalid")
+                os.rename(os.path.join(path, f), os.path.join(new_path, f))
+        except Exception as e:
+            continue
+        time.sleep(1)
     return HttpResponse("Files added to database.")
 
 
@@ -150,7 +154,7 @@ def check(request):
             subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE).communicate()
             # move file to error folder
-            new_path = os.path.join(opf.path.name, "notvalid")
+            new_path = os.path.join(opf.path.name, "error")
             os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
             opf.path = new_path
             opf.status = 3
