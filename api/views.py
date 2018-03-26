@@ -101,19 +101,21 @@ def collect(request, type):
         malware = 0
     files = [f for f in listdir(path) if isfile(join(path, f))]
     for f in files:
-        try:
-            arch = _pe_info(os.path.join(path, f))
-            if arch is not None:
-                Record.objects.create(
-                    name=f,
-                    arch=arch,
-                    file=os.path.join(path, f),
-                    malware=malware,
-                )
-            else:
-                os.rename(os.path.join(path, f), os.path.join(path, "NotValid_" + f))
-        except Exception as e:
-            pass
+        time.sleep(1)
+        if not f.find("NotValid_") == 0:
+            try:
+                arch = _pe_info(os.path.join(path, f))
+                if arch is not None:
+                    Record.objects.create(
+                        name=f,
+                        arch=arch,
+                        file=os.path.join(path, f),
+                        malware=malware,
+                    )
+                else:
+                    os.rename(os.path.join(path, f), os.path.join(path, "NotValid_" + f))
+            except Exception as e:
+                pass
     return HttpResponse("Files added to database.")
 
 
