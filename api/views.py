@@ -110,6 +110,8 @@ def collect(request, type):
                     file=os.path.join(path, f),
                     malware=malware,
                 )
+            else:
+                os.rename(os.path.join(path, f), os.path.join(path, "NotValid_" + f))
         except Exception as e:
             pass
     return HttpResponse("Files added to database.")
