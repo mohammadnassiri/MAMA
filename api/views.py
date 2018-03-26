@@ -121,7 +121,7 @@ def check(request):
     for opf in on_process_files:
         diff = cur_time - opf.updated_time
         diff_minutes = (diff.days * 24 * 60) + (diff.seconds / 60)
-        if diff_minutes > 7:
+        if diff_minutes > config('MACHINTIMEOUT', cast=int):
             vbox_name = opf.vbox
             vbox_snapshot_name = vbox_name + "-snapshot"
             vboxmanage_path = config("VBOXMANGE")
