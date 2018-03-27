@@ -2,6 +2,12 @@ from django.db import models
 from datetime import datetime
 
 
+class Vbox(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    status = models.IntegerField(default=0)  # 0=idle, 1=running, 2=complete-idle, 3=error not use
+    time = models.DateTimeField(default=datetime.now)
+
+
 class Record(models.Model):
     name = models.CharField(max_length=255, unique=True)
     arch = models.CharField(max_length=255)
@@ -14,13 +20,10 @@ class Record(models.Model):
     malware = models.BooleanField(default=False)
     run_pe = models.BooleanField(default=False)
     status = models.IntegerField(default=0)  # 0=waiting, 1=on process, 2=traced, 3=error
-    vbox = models.CharField(max_length=255)
+    vbox = models.ForeignKey(Vbox, on_delete=models.SET_NULL, null=True, default=None)
     created_time = models.DateTimeField(default=datetime.now)
     updated_time = models.DateTimeField(default=datetime.now)
 
 
-class Vbox(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    status = models.IntegerField(default=0)  # 0=idle, 1=running, 2=complete-idle, 3=error not use
-    time = models.DateTimeField(default=datetime.now)
-
+class Option(models.Model):
+    pause = models.IntegerField(default=0)  # 0 for pause all agents, 1 for resume

@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from api.models import Record, Vbox
+from api.models import Record, Vbox, Option
 import pefile
 import time
 
@@ -23,7 +23,8 @@ def index(request):
 @csrf_exempt
 def request(request):
     json_response = "0"
-    if request.method == "POST":
+    option = Option.objects.first()
+    if request.method == "POST" and option.pause == 1:
         arch = request.POST.get('arch')
         if arch == "x86":
             arch = "IMAGE_FILE_MACHINE_I386"
@@ -45,14 +46,14 @@ def download(request):
     if request.method == "POST":
         id = request.POST.get('id')
         vbox = request.POST.get('vbox')
+        vbox_model = Vbox.objects.filter(name=vbox).first()
         # update file and vbox models
         file = Record.objects.filter(id=id).first()
         if file:
             file.status = 1
-            file.vbox = vbox
+            file.vbox = vbox_model
             file.save()
             # update vbox model
-            vbox_model = Vbox.objects.filter(name=vbox).first()
             vbox_model.status = 1
             vbox_model.time = datetime.datetime.now()
             vbox_model.save()
@@ -70,8 +71,8 @@ def download(request):
 def result(request):
     if request.method == "POST":
         id = request.POST.get('id')
-        vbox = request.POST.get('vbox')
         file = Record.objects.filter(id=id).first()
+        vbox_model = file.vbox
         if file:
             file.response = request.POST.get('response')
             file.sequence = request.POST.get('sequence')
@@ -89,7 +90,6 @@ def result(request):
             os.rename(os.path.join(file.path.name, file.name), os.path.join(new_path, file.name))
             file.path = new_path
             # update vbox
-            vbox_model = Vbox.objects.filter(name=vbox).first()
             vbox_model.status = 2
             vbox_model.time = datetime.datetime.now()
             # make sure that new params has been saved.
@@ -97,7 +97,7 @@ def result(request):
                 file.save()
                 vbox_model.save()
                 # restore vbox
-                vbox_name = file.vbox
+                vbox_name = vbox_model.name
                 vbox_snapshot_name = vbox_name + "-snapshot"
                 _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
             except Exception as e:
@@ -108,26 +108,24 @@ def result(request):
 
 def check(request):
     # check hanged files
-    on_process_files = Record.objects.filter(status=1)
-    cur_time = datetime.datetime.now(datetime.timezone.utc)
+    file_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_FILE_TIMEOUT", cast=int))
+    on_process_files = Record.objects.filter(status=1).filter(updated_time__lt=file_time_threshold)
     for opf in on_process_files:
-        diff = cur_time - opf.updated_time
-        diff_minutes = (diff.days * 24 * 60) + (diff.seconds / 60)
-        if diff_minutes > config('MACHINE_FILE_TIMEOUT', cast=int):
-            # move file to error folder
-            new_path = os.path.join(opf.path.name, "error")
-            os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
-            opf.path = new_path
-            opf.updated_time = datetime.datetime.now()
-            opf.status = 3
-            opf.save()
-            # restore vbox
-            vbox_name = opf.vbox
-            vbox_snapshot_name = vbox_name + "-snapshot"
-            _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
+        # move file to error folder
+        new_path = os.path.join(opf.path.name, "error")
+        os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
+        opf.path = new_path
+        opf.updated_time = datetime.datetime.now()
+        opf.status = 3
+        opf.save()
+        # restore vbox
+        vbox_model = opf.vbox
+        vbox_name = vbox_model.name
+        vbox_snapshot_name = vbox_name + "-snapshot"
+        _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
     # check hanged vboxes
-    time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_HW_TIMEOUT"))
-    hanaged_vboxes = Vbox.objects.filter(status=1).filter(time__lt=time_threshold)
+    vbox_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_HW_TIMEOUT", cast=int))
+    hanaged_vboxes = Vbox.objects.filter(status=1).filter(time__lt=vbox_time_threshold)
     for hvb in hanaged_vboxes:
         # find the file and move to error
         file = Record.objects.filter(vbox=hvb.name).filter(status=1).first()
@@ -179,7 +177,7 @@ def collect(request, type):
 
 def vbox(request, name):
     try:
-        Record.objects.create(
+        Vbox.objects.create(
             name=name,
             status=0,
             time=datetime.datetime.now(),
@@ -187,7 +185,19 @@ def vbox(request, name):
         result = "VBox added to database."
     except Exception as e:
         result = "There is some error or duplicate vbox name. Please try again."
-    return HttpResponse("VBox added to database.")
+    return HttpResponse(result)
+
+
+def pause(request, status):
+    option = Option.objects.first()
+    if status == "resume":
+        option.pause = 1
+        result = "System resumed."
+    else:
+        option.pause = 0
+        result = "System paused."
+    option.save()
+    return HttpResponse(result)
 
 
 def _vbox_restore(vbox_name, vbox_snapshot_name, retry_limit):
