@@ -1,0 +1,69 @@
+{% load static %}
+<div class="container">
+    <div id="notice" class="row mt-5 panel-header">
+        <div class="col-md-12 font-weight-bold clear"><i class="fa fa-bell"></i>Notice</div>
+        <div class="col-md-12 mt-3">
+            <div class="section-text font-weight-light text-info">
+                Please keep this page open. It will check time exceeded files or virtual boxes and revert them.
+            </div>
+        </div>
+    </div>
+    <div id="about" class="row mt-2 panel-header">
+        <div class="col-md-12 font-weight-bold clear"><i class="fa fa-file"></i>About</div>
+        <div class="col-md-12 mt-3">
+            <div class="section-text font-weight-light">
+                An other malware analyzer
+            </div>
+        </div>
+    </div>
+    <div id="contact" class="row mt-2 panel-header">
+        <div class="col-md-12 font-weight-bold clear"><i class="fa fa-credit-card"></i>Contact</div>
+        <div class="col-md-12 mt-3">
+            <div class="section-text font-weight-light">
+                github: mohammadnassiri
+            </div>
+        </div>
+    </div>
+</div>
+<div class="footer center">{{ title }} @ 2018</div>
+
+<!-- Bootstrap core JavaScript -->
+<script src="{% static 'js/jquery.js' %}"></script>
+<script src="{% static 'js/popper.js' %}"></script>
+<script src="{% static 'js/bootstrap.js' %}"></script>
+
+<!-- Font awesome -->
+<script src="{% static 'js/fontawesome.js' %}"></script>
+
+<!-- custom script -->
+<script>
+
+    function check() {
+        $.ajax({
+            url: 'http://{{ url }}:8000/api/check',
+            success: function () {
+                console.log("(!) checked.")
+            }
+        });
+    }
+    /* check if there is problem from last run */
+    check();
+
+    /* check every 2 minutes */
+    setInterval(check, 120000);
+
+    /* manual check btn */
+    $(function() {
+        $("#check").click(function(e) {
+          e.preventDefault();
+          $("#check i").removeClass('fa fa-check');
+          $('#check i').addClass("fa fa-spinner fa-spin");
+          check();
+          setTimeout(function(){
+              $('#check i').removeClass("fa fa-spinner fa-spin");
+              $("#check i").addClass('fa fa-check');
+            }, 2000);
+        });
+    });
+
+</script>

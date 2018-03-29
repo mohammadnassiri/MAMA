@@ -8,7 +8,8 @@ urlpatterns = [
     path('download', views.download, name='download'),
     path('result', views.result, name='result'),
     path('check', views.check, name='check'),
-    path('collect/<type>', views.collect, name='collect'),  # collect dataset. type = benign or malware
-    path('vbox/<name>', views.vbox, name='vbox'),  # create vboxes. name = name of the vbox
-    path('pause/<status>', views.pause, name='pause'),  # status = pause all agents, status = resume all agents
+    path('collect', views.collect, name='collect'),  # collect dataset. type = benign or malware
+    path('vbox', views.vbox, name='vbox'),  # create vboxes. name = name of the vbox
+    path('restore', views.restore, name='restore'),  # restore single vbox. name = name of the vbox
+    path('option/<param>', views.option, name='option'),  # pause, resume, poweroff
 ]

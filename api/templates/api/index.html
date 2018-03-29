@@ -1,26 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>PE files auto tracer</title>
-</head>
-<body>
-<div style="text-align: center; margin: 30px;">
-    Please keep this page open. It will check time exceeded virtual boxes and revert them.
-</div>
+{% extends 'api/partial/master.html' %}
+{% block body %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-9 mt-5">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="font-weight-bold mt-2 mb-2 col-md-12 card-header panel-header">
+                        <i class="fa fa-cog"></i>Settings
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-12">
+                        <div class="card w-100">
+                            <div class="card-header">
+                                Collect
+                            </div>
+                            <div class="card-body">
+                                <form action="/api/collect">
+                                    {{ collect_form.as_p }}
+                                    <button type="submit" class="btn btn-primary">Collect</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card w-100">
+                            <div class="card-header">
+                                Single VBox Restore
+                            </div>
+                            <div class="card-body">
+                                <form action="/api/restore">
+                                    {{ restore_form.as_p }}
+                                    <button type="submit" class="btn btn-primary">Restore</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card w-100">
+                            <div class="card-header">
+                                Add VBox
+                            </div>
+                            <div class="card-body">
+                                <form action="/api/vbox">
+                                    {{ vbox_form.as_p }}
+                                    <button type="submit" class="btn btn-primary">Add</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 options">
+                <div class="col-md-12 mt-5">
+                    <div class="card">
+                        <div class="card-header text-info font-weight-light">
+                            <i class="fa fa-wrench"></i>Options
+                        </div>
+                        <div class="card-body">
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                    <a id="check" href="/api/check"><i class="fa fa-check"></i> Check</a>
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                {% if pause == 0 %}
+                                    <a href="/api/option/resume"><i class="fa fa-play"></i> Resume</a>
+                                {% else %}
+                                    <a href="/api/option/pause"><i class="fa fa-pause"></i> Pause</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <a href="/api/option/poweroff"><i class="fa fa-power-off"></i> Power Off</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-2">
+                        <div class="card-header text-info font-weight-light">
+                            <i class="fa fa-info-circle"></i>Status
+                        </div>
+                        <div class="card-body">
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <i class="fa fa-cloud text-secondary"></i> VBoxes: 2
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <i class="fa fa-hourglass-start text-secondary"></i> Idle: 1000
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <i class="fa fa-hourglass-half text-secondary"></i> Pending: 1200
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <i class="fa fa-hourglass-end text-secondary"></i> Traced: 576
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script>
-    setInterval(check, 120000);
-    function check() {
-        $.ajax({
-        url: 'http://localhost:8000/api/check',
-        success : function(){
-            console.log("(!) checked.")
-        }
-    });
-    }
-
-</script>
-</body>
-</html>
+{% endblock %}
