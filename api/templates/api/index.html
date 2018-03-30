@@ -94,16 +94,19 @@
                         </div>
                         <div class="card-body">
                             <div class="card-text font-weight-light clients-count mb-3">
-                                <i class="fa fa-cloud text-secondary"></i> VBoxes: 2
+                                <i class="fa fa-cloud text-secondary"></i> VBoxe: {{ vbox_count }}
                             </div>
                             <div class="card-text font-weight-light clients-count mb-3">
-                                <i class="fa fa-hourglass-start text-secondary"></i> Idle: 1000
+                                <i class="fa fa-hourglass-start text-secondary"></i> Idle: {{ idle_count }}
                             </div>
                             <div class="card-text font-weight-light clients-count mb-3">
-                                <i class="fa fa-hourglass-half text-secondary"></i> Pending: 1200
+                                <i class="fa fa-hourglass-half text-secondary"></i> Pending: {{ pending_count }}
                             </div>
                             <div class="card-text font-weight-light clients-count mb-3">
-                                <i class="fa fa-hourglass-end text-secondary"></i> Traced: 576
+                                <i class="fa fa-hourglass-end text-secondary"></i> Traced: {{ traced_count }}
+                            </div>
+                            <div class="card-text font-weight-light clients-count mb-3">
+                                <i class="fa fa-close text-secondary"></i> Error: {{ error_count }}
                             </div>
                         </div>
                     </div>

@@ -20,6 +20,11 @@ def index(request):
     vbox_form = VBoxNameForm()
     restore_form = SingleVBoxRestoreForm()
     collect_form = CollectForm()
+    vbox_count = Vbox.objects.count()
+    idle_count = Record.objects.filter(status=0).count()
+    pending_count = Record.objects.filter(status=1).count()
+    traced_count = Record.objects.filter(status=2).count()
+    error_count = Record.objects.filter(status=3).count()
     context = {
         'title': "Malware Analyzer",
         'url': config('url'),
@@ -28,6 +33,11 @@ def index(request):
         'vbox_form': vbox_form,
         'restore_form': restore_form,
         'collect_form': collect_form,
+        'vbox_count' : vbox_count,
+        'idle_count' : idle_count,
+        'pending_count' : pending_count,
+        'traced_count' : traced_count,
+        'error_count' : error_count,
     }
     return render(request, 'api/index.html', context)
 
