@@ -80,7 +80,11 @@
                                 {% endif %}
                             </div>
                             <div class="card-text font-weight-light clients-count mb-3">
-                                <a href="/api/option/poweroff"><i class="fa fa-power-off"></i> Power Off</a>
+                                {% if power == 0 %}
+                                    <a href="/api/option/poweron"><i class="fa fa-plug"></i> Power On</a>
+                                {% else %}
+                                    <a href="/api/option/poweroff"><i class="fa fa-power-off"></i> Power Off</a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

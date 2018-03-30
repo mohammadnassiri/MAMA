@@ -27,3 +27,4 @@ class Record(models.Model):
 
 class Option(models.Model):
     pause = models.IntegerField(default=0)  # 0 for pause all agents, 1 for resume
+    power = models.IntegerField(default=0)  # 0 for power off and 1 for power on

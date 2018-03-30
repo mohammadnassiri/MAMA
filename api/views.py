@@ -24,6 +24,7 @@ def index(request):
         'title': "Malware Analyzer",
         'url': config('url'),
         'pause': option.pause,
+        'power': option.power,
         'vbox_form': vbox_form,
         'restore_form': restore_form,
         'collect_form': collect_form,
@@ -248,10 +249,12 @@ def restore(request):
 
 
 def option(request, param):
+    type = True
     option = Option.objects.first()
     if option == None:
         Option.objects.create(
             pause=0,
+            power=0,
         )
         option = Option.objects.first()
     if param == "resume":
@@ -262,12 +265,20 @@ def option(request, param):
         result = "System paused."
     elif param == "poweroff":
         option.pause = 0
-        result = _vbox_power_off()
+        option.power = 0
+        result, type = _vbox_power_off()
+    elif param == "poweron":
+        option.pause = 1
+        option.power = 1
+        result, type = _vbox_power_on()
     else:
         result = "Please give parameter."
     try:
         option.save()
-        messages.success(request, result)
+        if type:
+            messages.success(request, result)
+        else:
+            messages.error(request, result)
     except Exception as e:
         messages.error(request, "Please try again later.")
     next = request.POST.get('next', '/api')
@@ -275,6 +286,7 @@ def option(request, param):
 
 
 def _vbox_power_off():
+    type = True
     vboxes = Vbox.objects.all()
     result = "Virtual boxes powered off."
     for vm in vboxes:
@@ -291,8 +303,32 @@ def _vbox_power_off():
             vm.save()
         except Exception as e:
             result = "Please try again later."
+            type = False
             pass
-    return result
+    return result, type
+
+
+def _vbox_power_on():
+    type = True
+    vboxes = Vbox.objects.all()
+    result = "Virtual boxes powered on."
+    for vm in vboxes:
+        try:
+            vboxmanage_path = config("VBOX_MANAGE")
+            # power on vbox
+            command = vboxmanage_path + " startvm " + vm.name
+            subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).communicate()
+            time.sleep(config("MACHINE_SLEEP_POWEROFF", cast=int))
+            # update vbox model
+            vm.status = 0
+            vm.time = datetime.datetime.now()
+            vm.save()
+        except Exception as e:
+            result = "Please try again later."
+            type = False
+            pass
+    return result, type
 
 
 def _vbox_restore(vbox_name, vbox_snapshot_name, retry_limit):
