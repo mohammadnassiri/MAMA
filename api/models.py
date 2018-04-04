@@ -13,7 +13,7 @@ class Record(models.Model):
     arch = models.CharField(max_length=255)
     response = models.TextField()
     path = models.FileField(upload_to="dataset")
-    sequence = models.TextField()
+    sequence = models.FileField(upload_to="sequence")
     run_pe_file = models.FileField(upload_to="extracted")
     run_pe_sequence = models.TextField()
     screen_shot = models.FileField(upload_to="screenshot")

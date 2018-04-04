@@ -98,7 +98,8 @@ def result(request):
         vbox_model = file.vbox
         if file:
             file.response = request.POST.get('response')
-            file.sequence = request.POST.get('sequence')
+            if request.FILES.get('sequence'):
+                file.sequence = request.FILES.get('sequence')
             if request.FILES.get('run_pe_file'):
                 file.run_pe_file = request.FILES.get('run_pe_file')
             if request.POST.get('run_pe_sequence'):
@@ -130,47 +131,54 @@ def result(request):
 
 
 def check(request):
-    # check hanged files
-    file_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_FILE_TIMEOUT", cast=int))
-    on_process_files = Record.objects.filter(status=1).filter(updated_time__lt=file_time_threshold)
-    for opf in on_process_files:
-        # move file to error folder. try is for sometimes moving errors
-        try:
-            new_path = os.path.join(opf.path.name, "error")
-            os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
-            opf.path = new_path
-        except Exception as e:
-            pass
-        opf.response = "Uknown Error. File Error."
-        opf.updated_time = datetime.datetime.now()
-        opf.status = 3
-        opf.save()
-        # restore vbox
-        vbox_model = opf.vbox
-        vbox_name = vbox_model.name
-        vbox_snapshot_name = vbox_name + "-snapshot"
-        _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
-    # check hanged vboxes
-    vbox_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_HW_TIMEOUT", cast=int))
-    hanaged_vboxes = Vbox.objects.filter(time__lt=vbox_time_threshold)
-    for hvb in hanaged_vboxes:
-        # find the file and move to error exception let it go to upper scope
-        try:
-            file = Record.objects.filter(vbox=hvb.id).filter(status=1).first()
-            new_path = os.path.join(file.path.name, "error")
-            os.rename(os.path.join(file.path.name, file.name), os.path.join(new_path, file.name))
-            file.path = new_path
-            file.response = "Uknown Error. VBox Error."
-            file.updated_time = datetime.datetime.now()
-            file.status = 3
-            file.save()
-        except Exception as e:
-            pass
-        # restore vbox
-        vbox_name = hvb.name
-        vbox_snapshot_name = vbox_name + "-snapshot"
-        _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
-    return HttpResponse("Task completed.")
+    result = ""
+    # check poweroff status
+    option = Option.objects.first()
+    if option.power == 1:
+        # check hanged files
+        file_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_FILE_TIMEOUT", cast=int))
+        on_process_files = Record.objects.filter(status=1).filter(updated_time__lt=file_time_threshold)
+        for opf in on_process_files:
+            # move file to error folder. try is for sometimes moving errors
+            try:
+                new_path = os.path.join(opf.path.name, "error")
+                os.rename(os.path.join(opf.path.name, opf.name), os.path.join(new_path, opf.name))
+                opf.path = new_path
+            except Exception as e:
+                pass
+            opf.response = "Uknown Error. File Error."
+            opf.updated_time = datetime.datetime.now()
+            opf.status = 3
+            opf.save()
+            # restore vbox
+            vbox_model = opf.vbox
+            vbox_name = vbox_model.name
+            vbox_snapshot_name = vbox_name + "-snapshot"
+            _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
+        # check hanged vboxes
+        vbox_time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=config("MACHINE_HW_TIMEOUT", cast=int))
+        hanaged_vboxes = Vbox.objects.filter(time__lt=vbox_time_threshold)
+        for hvb in hanaged_vboxes:
+            # find the file and move to error exception let it go to upper scope
+            try:
+                file = Record.objects.filter(vbox=hvb.id).filter(status=1).first()
+                new_path = os.path.join(file.path.name, "error")
+                os.rename(os.path.join(file.path.name, file.name), os.path.join(new_path, file.name))
+                file.path = new_path
+                file.response = "Uknown Error. VBox Error."
+                file.updated_time = datetime.datetime.now()
+                file.status = 3
+                file.save()
+            except Exception as e:
+                pass
+            # restore vbox
+            vbox_name = hvb.name
+            vbox_snapshot_name = vbox_name + "-snapshot"
+            _vbox_restore(vbox_name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
+            result = "Task completed."
+    else:
+        result = "System powered off."
+    return HttpResponse(result)
 
 
 def collect(request):
