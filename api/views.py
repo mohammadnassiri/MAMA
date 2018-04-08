@@ -110,7 +110,9 @@ def result(request):
             file.status = 2
             file.updated_time = datetime.datetime.now()
             # move file to traced folder
-            new_path = os.path.join(file.path.name, "traced")
+            new_path = file.path.name
+            if file.path.name.find("traced") == -1:
+                new_path = os.path.join(file.path.name, "traced")
             os.rename(os.path.join(file.path.name, file.name), os.path.join(new_path, file.name))
             file.path = new_path
             # update vbox
