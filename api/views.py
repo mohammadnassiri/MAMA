@@ -354,7 +354,7 @@ def _vbox_power_on():
 def _vbox_restore(vbox_name, vbox_snapshot_name, retry_limit):
     vbox_model = Vbox.objects.filter(name=vbox_name).first()
     try:
-        vboxmanage_path = config("VBOX_MANGE")
+        vboxmanage_path = config("VBOX_MANAGE")
         # power off vbox
         command = vboxmanage_path + " controlvm " + vbox_name + " poweroff"
         subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
