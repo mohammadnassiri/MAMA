@@ -333,21 +333,8 @@ def _vbox_power_on():
     vboxes = Vbox.objects.all()
     result = "Virtual boxes powered on."
     for vm in vboxes:
-        try:
-            vboxmanage_path = config("VBOX_MANAGE")
-            # power on vbox
-            command = vboxmanage_path + " startvm " + vm.name
-            subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE).communicate()
-            time.sleep(config("MACHINE_SLEEP_POWEROFF", cast=int))
-            # update vbox model
-            vm.status = 0
-            vm.time = datetime.datetime.now()
-            vm.save()
-        except Exception as e:
-            result = "Please try again later."
-            type = False
-            pass
+        vbox_snapshot_name = vm.name + "-snapshot"
+        _vbox_restore(vm.name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
     return result, type
 
 
