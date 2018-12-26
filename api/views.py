@@ -335,6 +335,7 @@ def _vbox_power_on():
     for vm in vboxes:
         vbox_snapshot_name = vm.name + "-snapshot"
         _vbox_restore(vm.name, vbox_snapshot_name, config("MACHINE_RESTORE_RETRY_LIMIT", cast=int))
+        time.sleep(config("MACHIN_POWERON_WAIT", cast=int))
     return result, type
 
 
