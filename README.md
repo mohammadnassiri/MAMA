@@ -32,4 +32,4 @@ MAMA's server can:
 - Save results and states in the database.
 - Check client's status periodically.
 
-I will happy to receive any issues or suggestions.
+We will happy to listen issues and suggestions.
